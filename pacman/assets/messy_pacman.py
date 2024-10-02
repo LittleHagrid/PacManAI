@@ -71,7 +71,7 @@ pinky_box = False
 moving = False
 ghost_speeds = [2, 2, 2, 2]
 startup_counter = 0
-lives = 3
+lives = 1
 game_over = False
 game_won = False
 
@@ -201,7 +201,6 @@ class Agent:
 
 
     def get_state(self):
-        pass # do later, need help (should use namedtuple point for pacman location?)
         WIDTH = 900
         HEIGHT = 950
         center_x = player_x + 23
@@ -297,8 +296,8 @@ class Agent:
 
         return state
 
-    def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done)) # popleft if MAX_MEOMRY is reached
+    def remember(self, state, action, reward, next_state, game_over):
+        self.memory.append((state, action, reward, next_state, game_over)) # popleft if MAX_MEOMRY is reached
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
@@ -311,11 +310,11 @@ class Agent:
         #for state, action, reward, next_state, done in mini_sample:
         #   self.trainer.train_step(state, action, reward, next_state, done)
 
-    def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
+    def train_short_memory(self, state, action, reward, next_state, game_over):
+        self.trainer.train_step(state, action, reward, next_state, game_over)
 
     def get_action(self, state):
-        print(state)
+        # print(state)
         event_r = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT)
         event_l = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT)
         event_u = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
@@ -944,38 +943,40 @@ class Ghost:
 
 
 def draw_misc():
-    score_text = font.render(f'Score: {score}', True, 'white')
-    screen.blit(score_text, (10, 920))
+    # score_text = font.render(f'Score: {score}', True, 'white')
+    # screen.blit(score_text, (10, 920))
     if powerup:
         pygame.draw.circle(screen, 'blue', (140, 930), 15)
     for i in range(lives):
         screen.blit(pygame.transform.scale(player_images[0], (30, 30)), (650 + i * 40, 915))
     if game_over:
-        pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
-        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        gameover_text = font.render('Game over! Space bar to restart!', True, 'red')
-        screen.blit(gameover_text, (100, 300))
+        # pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
+        # pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
+        # gameover_text = font.render('Game over! Space bar to restart!', True, 'red')
+        # screen.blit(gameover_text, (100, 300))
+        score -= 30
     if game_won:
-        pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
-        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        gameover_text = font.render('Victory! Space bar to restart!', True, 'green')
-        screen.blit(gameover_text, (100, 300))
+        # pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
+        # pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
+        # gameover_text = font.render('Victory! Space bar to restart!', True, 'green')
+        # screen.blit(gameover_text, (100, 300))
+        score += 30
 
 
-def check_collisions(scor, power, power_count, eaten_ghosts):
+def check_collisions(score, power, power_count, eaten_ghosts):
     num1 = (HEIGHT - 50) // 32
     num2 = WIDTH // 30
     if 0 < player_x < 870:
         if level[center_y // num1][center_x // num2] == 1:
             level[center_y // num1][center_x // num2] = 0
-            scor += 3
+            score += 3
         if level[center_y // num1][center_x // num2] == 2:
             level[center_y // num1][center_x // num2] = 0
-            scor += 5
+            score += 5
             power = True
             power_count = 0
             eaten_ghosts = [False, False, False, False]
-    return scor, power, power_count, eaten_ghosts
+    return score, power, power_count, eaten_ghosts
 
 
 def draw_board():
@@ -1280,6 +1281,7 @@ while run:
                 pinky_dead = False
             else:
                 game_over = True
+                print("this works (:")
                 moving = False
                 startup_counter = 0
     if powerup and player_circle.colliderect(blinky.rect) and eaten_ghost[0] and not blinky.dead:
@@ -1431,7 +1433,7 @@ while run:
     # get old state
     state_old = agent.get_state()
 
-    print(state_old)
+    # print(state_old)
 
     # get move
     final_move = agent.get_action(state_old)
@@ -1441,7 +1443,7 @@ while run:
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN:
-            print(event.key)
+            # print(event.key)
             if event.key == pygame.K_RIGHT:
                 direction_command = 0 # 1073741903
             if event.key == pygame.K_LEFT:
@@ -1450,7 +1452,8 @@ while run:
                 direction_command = 2 # 1073741906
             if event.key == pygame.K_DOWN:
                 direction_command = 3 # 1073741905
-            if event.key == pygame.K_SPACE and (game_over or game_won):
+            # if event.key == pygame.K_SPACE and (game_over or game_won):
+            if (game_over or game_won):
                 powerup = False
                 power_counter = 0
                 lives -= 1
@@ -1477,7 +1480,7 @@ while run:
                 clyde_dead = False
                 pinky_dead = False
                 score = 0
-                lives = 3
+                lives = 1
                 level = copy.deepcopy(boards)
                 game_over = False
                 game_won = False
@@ -1519,21 +1522,25 @@ while run:
     
     # perform move and get new
     # fake values for testing, used to be one line with commas
-    reward = 0
-    done = 0
-    score = 0 # score = model.play_step(final_move) # add playstep function code
+    reward = score
+    # if game_over == True:
+    #     done = True
+    # else:
+    #     done = False
+    # score = 0 # score = model.play_step(final_move) # add playstep function code
 
     state_new = agent.get_state()
 
     # train short memory
-    agent.train_short_memory(state_old, final_move, reward, state_new, done)
+    agent.train_short_memory(state_old, final_move, reward, state_new, game_over)
 
     # remember
-    agent.remember(state_old, final_move, reward, state_new, done)
+    agent.remember(state_old, final_move, reward, state_new, game_over)
 
-    if done:
+    if game_over:
         # train long memory, plot result
         # game.reset() which is currently in my __init__ in "game.py"
+        print("this function triggers")
         agent.n_games += 1
         agent.train_long_memory()
 
@@ -1555,9 +1562,9 @@ pygame.quit()
 
 
 # agent
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
+# MAX_MEMORY = 100_000
+# BATCH_SIZE = 1000
+# LR = 0.001
 
 
 
