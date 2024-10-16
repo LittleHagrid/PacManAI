@@ -12,6 +12,8 @@ from model import Linear_QNet, QTrainer
 from helper import plot
 import model
 import helper
+import matplotlib.pyplot as plt
+from IPython import display
 
 
 pygame.init()
@@ -320,7 +322,9 @@ class Agent:
         event_u = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
         event_d = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
+        self.epsilon = 120 - (self.n_games/4)
+        if self.epsilon < 30:
+            self.epsilon = random.randint(25, 35)
         final_move = [0,0,0,0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 3)
@@ -950,17 +954,15 @@ def draw_misc():
     for i in range(lives):
         screen.blit(pygame.transform.scale(player_images[0], (30, 30)), (650 + i * 40, 915))
     if game_over:
-        # pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
-        # pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        # gameover_text = font.render('Game over! Space bar to restart!', True, 'red')
-        # screen.blit(gameover_text, (100, 300))
-        score -= 30
+        pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
+        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
+        gameover_text = font.render('Game over! Space bar to restart!', True, 'red')
+        screen.blit(gameover_text, (100, 300))
     if game_won:
-        # pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
-        # pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
-        # gameover_text = font.render('Victory! Space bar to restart!', True, 'green')
-        # screen.blit(gameover_text, (100, 300))
-        score += 30
+        pygame.draw.rect(screen, 'white', [50, 200, 800, 300],0, 10)
+        pygame.draw.rect(screen, 'dark gray', [70, 220, 760, 260], 0, 10)
+        gameover_text = font.render('Victory! Space bar to restart!', True, 'green')
+        screen.blit(gameover_text, (100, 300))
 
 
 def check_collisions(score, power, power_count, eaten_ghosts):
@@ -1024,6 +1026,57 @@ def draw_player():
         screen.blit(pygame.transform.rotate(player_images[counter // 5], 270), (player_x, player_y))
 
 
+#fixed directions
+# def check_position(centerx, centery):
+#     turns = [False, False, False, False]
+#     num1 = (HEIGHT - 50) // 32
+#     num2 = (WIDTH // 30)
+#     num3 = 15
+#     # check collisions based on center x and center y of player +/- fudge number
+#     if centerx // 30 < 29:
+#         if direction == 0:
+#             if level[centery // num1][(centerx - num3) // num2] < 3:
+#                 turns[1] = True
+#         if direction == 1:
+#             if level[centery // num1][(centerx + num3) // num2] < 3:
+#                 turns[0] = True
+#         if direction == 2:
+#             if level[(centery + num3) // num1][centerx // num2] < 3:
+#                 turns[3] = True
+#         if direction == 3:
+#             if level[(centery - num3) // num1][centerx // num2] < 3:
+#                 turns[2] = True
+
+#         if direction == 2 or direction == 3:
+#             if 12 <= centerx % num2 <= 18:
+#                 if level[(centery + num3) // num1][centerx // num2] < 3:
+#                     turns[3] = True
+#                 if level[(centery - num3) // num1][centerx // num2] < 3:
+#                     turns[2] = True
+#             if 12 <= centery % num1 <= 18:
+#                 if level[centery // num1][(centerx - num2) // num2] < 3:
+#                     turns[1] = True
+#                 if level[centery // num1][(centerx + num2) // num2] < 3:
+#                     turns[0] = True
+#         if direction == 0 or direction == 1:
+#             if 12 <= centerx % num2 <= 18:
+#                 if level[(centery + num1) // num1][centerx // num2] < 3:
+#                     turns[3] = True
+#                 if level[(centery - num1) // num1][centerx // num2] < 3:
+#                     turns[2] = True
+#             if 12 <= centery % num1 <= 18:
+#                 if level[centery // num1][(centerx - num3) // num2] < 3:
+#                     turns[1] = True
+#                 if level[centery // num1][(centerx + num3) // num2] < 3:
+#                     turns[0] = True
+#     else:
+#         turns[0] = True
+#         turns[1] = True
+
+#     return turns
+
+
+#relative directions
 def check_position(centerx, centery):
     turns = [False, False, False, False]
     num1 = (HEIGHT - 50) // 32
@@ -1084,6 +1137,18 @@ def move_player(play_x, play_y):
     elif direction == 3 and turns_allowed[3]:
         play_y += player_speed
     return play_x, play_y
+
+# def keep_moving(score):
+#     # r, l, u, d
+#     if direction == 0 and not turns_allowed[0]:
+#         score -= 2
+#     elif direction == 1 and not turns_allowed[1]:
+#         score -= 2
+#     if direction == 2 and not turns_allowed[2]:
+#         score -= 2
+#     elif direction == 3 and not turns_allowed[3]:
+#         score -= 2
+#     return score
 
 
 def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
@@ -1163,6 +1228,27 @@ def get_targets(blink_x, blink_y, ink_x, ink_y, pink_x, pink_y, clyd_x, clyd_y):
         else:
             clyd_target = return_target
     return [blink_target, ink_target, pink_target, clyd_target]
+
+
+# helper.py
+plt.ion()
+
+def plot(scores, mean_scores):
+    display.clear_output(wait=True)
+    display.display(plt.gcf())
+    plt.clf()
+    plt.title('Training...')
+    plt.xlabel('Number of Games')
+    plt.ylabel('Score')
+    plt.plot(scores)
+    plt.plot(mean_scores)
+    plt.ylim(ymin=0)
+    plt.text(len(scores)-1, scores[-1], str(scores[-1]))
+    plt.text(len(mean_scores)-1, mean_scores[-1], str(mean_scores[-1]))
+    plt.show(block=False)
+    plt.pause(.1)
+
+# end of helper.py
 
 
 run = True
@@ -1281,7 +1367,6 @@ while run:
                 pinky_dead = False
             else:
                 game_over = True
-                print("this works (:")
                 moving = False
                 startup_counter = 0
     if powerup and player_circle.colliderect(blinky.rect) and eaten_ghost[0] and not blinky.dead:
@@ -1479,10 +1564,10 @@ while run:
                 inky_dead = False
                 clyde_dead = False
                 pinky_dead = False
-                score = 0
+                # score = 0
                 lives = 1
                 level = copy.deepcopy(boards)
-                game_over = False
+                # game_over = False
                 game_won = False
 
         if event.type == pygame.KEYUP:
@@ -1495,6 +1580,8 @@ while run:
             if event.key == pygame.K_DOWN and direction_command == 3:
                 direction_command = direction
 
+
+    #absolute directions
     if direction_command == 0 and turns_allowed[0]:
         direction = 0
     if direction_command == 1 and turns_allowed[1]:
@@ -1504,10 +1591,69 @@ while run:
     if direction_command == 3 and turns_allowed[3]:
         direction = 3
 
-    if player_x > 900:
-        player_x = -47
-    elif player_x < -50:
-        player_x = 897
+    # #relative direcitons
+    # # for DC: straight, right, left, back ; for D: r, l, u, d
+    # # stay moving east
+    # if direction_command == 0 and turns_allowed[0] and direction == 0:
+    #     direction = 0
+    # # stay moving west
+    # if direction_command == 0 and turns_allowed[1] and direction == 1:
+    #     direction = 1
+    # # stay moving north
+    # if direction_command == 0 and turns_allowed[2] and direction == 2:
+    #     direction = 2
+    # # stay moving south
+    # if direction_command == 0 and turns_allowed[3] and direction == 3:
+    #     direction = 3
+    # # turn right to go east
+    # if direction_command == 1 and turns_allowed[0] and direction == 2:
+    #     direction = 0
+    # # turn right to go west
+    # if direction_command == 1 and turns_allowed[1] and direction == 3:
+    #     direction = 1
+    # # turn right to go north
+    # if direction_command == 1 and turns_allowed[2] and direction == 1:
+    #     direction = 2
+    # # turn right to go south
+    # if direction_command == 1 and turns_allowed[3] and direction == 0:
+    #     direction = 3
+    # # turn left to go east
+    # if direction_command == 2 and turns_allowed[0] and direction == 3:
+    #     direction = 0
+    # # turn left to go west
+    # if direction_command == 2 and turns_allowed[1] and direction == 2:
+    #     direction = 1
+    # # turn left to go north
+    # if direction_command == 2 and turns_allowed[2] and direction == 0:
+    #     direction = 2
+    # # turn left to go south
+    # if direction_command == 2 and turns_allowed[3] and direction == 1:
+    #     direction = 3
+    # # turn back to go east
+    # if direction_command == 3 and turns_allowed[0] and direction == 1:
+    #     direction = 0
+    # # turn back to go west
+    # if direction_command == 3 and turns_allowed[1] and direction == 0:
+    #     direction = 1
+    # # turn back to go north
+    # if direction_command == 3 and turns_allowed[2] and direction == 3:
+    #     direction = 2
+    # # turn back to go south
+    # if direction_command == 3 and turns_allowed[3] and direction == 2:
+    #     direction = 3
+    
+
+    #original
+    # if player_x > 900:
+    #     player_x = -47
+    # elif player_x < -50:
+    #     player_x = 897
+
+    #attempted fix
+    if player_x > 870:
+        player_x = -10
+    elif player_x < -20:
+        player_x = 870
 
     if blinky.in_box and blinky_dead:
         blinky_dead = False
@@ -1520,14 +1666,24 @@ while run:
 
     pygame.display.flip()
     
+    if game_over and not game_won:
+        score -= 30
+    elif game_won:
+        score += 30
+
+    if direction == 0 and not turns_allowed[0]:
+        score -= 0.2
+    elif direction == 1 and not turns_allowed[1]:
+        score -= 0.2
+    if direction == 2 and not turns_allowed[2]:
+        score -= 0.2
+    elif direction == 3 and not turns_allowed[3]:
+        score -= 0.2
+
     # perform move and get new
     # fake values for testing, used to be one line with commas
     reward = score
-    # if game_over == True:
-    #     done = True
-    # else:
-    #     done = False
-    # score = 0 # score = model.play_step(final_move) # add playstep function code
+    # score = model.play_step(final_move) # add playstep function code
 
     state_new = agent.get_state()
 
@@ -1537,10 +1693,12 @@ while run:
     # remember
     agent.remember(state_old, final_move, reward, state_new, game_over)
 
+    if score < 0:
+        score = 0
+
     if game_over:
         # train long memory, plot result
         # game.reset() which is currently in my __init__ in "game.py"
-        print("this function triggers")
         agent.n_games += 1
         agent.train_long_memory()
 
@@ -1555,53 +1713,11 @@ while run:
         mean_score = total_score / agent.n_games
         plot_mean_scores.append(mean_score)
         plot(plot_scores, plot_mean_scores)
+        game_over = False
+        score = 0
+
+    if agent.n_games > 300:
+        pass
 pygame.quit()
 
 
-# sound effects, restart and winning messages
-
-
-# agent
-# MAX_MEMORY = 100_000
-# BATCH_SIZE = 1000
-# LR = 0.001
-
-
-
-# def train():
-#     while True:
-#         # get old state
-#         state_old = agent.get_state()
-
-#         # get move
-#         final_move = agent.get_action(state_old)
-
-#         # perform move and get new
-#         reward, done, score = model.play_step(final_move)
-#         state_new = agent.get_state()
-
-#         # train short memory
-#         agent.train_short_memory(state_old, final_move, reward, state_new, done)
-
-#         # remember
-#         agent.remember(state_old, final_move, reward, state_new, done)
-
-#         if done:
-#             # train long memory, plot result
-#             # game.reset() which is currently in my __init__ in "game.py"
-#             agent.n_games += 1
-#             agent.train_long_memory()
-
-#             if score > record:
-#                 record = score
-#                 agent.model.save()
-
-#             print('Game', agent.n_games, 'Score', score, 'Record:', record)
-
-#             plot_scores.append(score)
-#             total_score += score
-#             mean_score = total_score / agent.n_games
-#             plot_mean_scores.append(mean_score)
-#             plot(plot_scores, plot_mean_scores)
-
-# train()
